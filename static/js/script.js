@@ -6,13 +6,15 @@ var WebPong = {
 		fgColor: "#ffffff",
 		bgColor: "#000000",
 		racketSteps: 500,
+		ballSteps: 1000,
 		framerate: 60,
 		s: {
 			dividerWidth: .003,
 			dividerDashSize: .01,
 			racketHeight: .2,
 			racketWidth: .008,
-			racketX: .015
+			racketX: .015,
+			ballSize: .05
 		}
 	},
 	/**
@@ -28,8 +30,10 @@ var WebPong = {
 		s: { },
 		/* Racket positions: */
 		rackets: [0,0],
-		/* TODO: Remove! */
-		upwards: [true,false]
+		racketsUpwards: [true,false],
+		/* Ball position & movement: */
+		ball: [0,0],
+		ballMovement: [0,0]
 	},
 	/**
 	 * Initializes variables and creates handlers.
@@ -47,6 +51,9 @@ var WebPong = {
 		/* Set racket positions: */
 		this.r.rackets[0] = Math.floor(this.p.racketSteps*.5);
 		this.r.rackets[1] = Math.floor(this.p.racketSteps*.5);
+		/* Set ball position: */
+		this.r.ball[0] = Math.floor(this.p.ballSteps*.5);
+		this.r.ball[1] = Math.floor(this.p.ballSteps*.5);
 		/* Add resize handler: */
 		$(window).resize(function() {
 			WebPong.resize();
@@ -85,6 +92,7 @@ var WebPong = {
 		this.r.s.racketHeight = Math.floor(this.r.height*this.p.s.racketHeight);
 		this.r.s.racketWidth = Math.floor(this.r.width*this.p.s.racketWidth);
 		this.r.s.racketX = Math.floor(this.r.width*this.p.s.racketX);
+		this.r.s.ballSize = Math.floor(this.r.height*this.p.s.ballSize);
 		this.r.s.middleX = Math.floor(this.r.width*.5);
 	},
 	/**
@@ -131,6 +139,8 @@ var WebPong = {
 		this.drawRacket(1);
 		/* Draw divider: */
 		this.drawDivider();
+		/* Draw ball: */
+		this.drawBall();
 	},
 	/**
 	 * Draws a racket.
@@ -167,6 +177,18 @@ var WebPong = {
 		}
 	},
 	/**
+	 * Draws the ball.
+	*/
+	drawBall: function() {
+		this.reset();
+		this.r.ctx.fillRect(
+			this.getBallX(),
+			this.getBallY(),
+			this.r.s.ballSize,
+			this.r.s.ballSize
+		);
+	},
+	/**
 	 * Returns the y coordinate for a racket.
 	 * @param pos Zero or One.
 	*/
@@ -174,5 +196,39 @@ var WebPong = {
 		return Math.floor(
 			this.r.rackets[pos]*(this.r.height-this.r.s.racketHeight)/this.p.racketSteps
 		);
+	},
+	/**
+	 * Returns the x coordinate for the ball.
+	*/
+	getBallX: function() {
+		return Math.floor(
+			this.r.ball[0]*(this.r.width-this.r.s.ballSize)/this.p.ballSteps
+		);
+	},
+	/**
+	 * Returns the y coordinate for the ball.
+	*/
+	getBallY: function() {
+		return Math.floor(
+			this.r.ball[1]*(this.r.height-this.r.s.ballSize)/this.p.ballSteps
+		);
+	},
+	/**
+	 * Triggers the racket animation between games.
+	*/
+	triggerRacketAnimation: function() {
+		for (var i=0; i < 2; ++i) {
+			if (this.r.racketsUpwards[i]) {
+				this.r.rackets[i] -= 2;
+				if (this.r.rackets[i] === 0) {
+					this.r.racketsUpwards[i] = !this.r.racketsUpwards[i];
+				};
+			} else {
+				this.r.rackets[i] += 2;
+				if (this.r.rackets[i] === this.p.racketSteps) {
+					this.r.racketsUpwards[i] = !this.r.racketsUpwards[i];
+				};
+			};
+		}
 	}
 };
