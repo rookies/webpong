@@ -6,6 +6,7 @@ var WebPong = {
 		fgColor: "#ffffff",
 		bgColor: "#000000",
 		racketSteps: 500,
+		framerate: 60,
 		s: {
 			dividerWidth: .003,
 			dividerDashSize: .01,
@@ -49,25 +50,25 @@ var WebPong = {
 		/* Add resize handler: */
 		$(window).resize(function() {
 			WebPong.resize();
-			WebPong.draw(); /* FIXME? */
-		});
-		/* Add animation: (TODO: Remove!) */
-		window.setInterval(function() {
-			for (var i=0; i < 2; ++i) {
-				if (WebPong.r.upwards[i]) {
-					WebPong.r.rackets[i] -= 2;
-					if (WebPong.r.rackets[i] === 0) {
-						WebPong.r.upwards[i] = !WebPong.r.upwards[i];
-					};
-				} else {
-					WebPong.r.rackets[i] += 2;
-					if (WebPong.r.rackets[i] === WebPong.p.racketSteps) {
-						WebPong.r.upwards[i] = !WebPong.r.upwards[i];
-					};
-				};
-			}
 			WebPong.draw();
-		}, 10);
+		});
+		/* Set up main loop: */
+		var animationFrame = window.requestAnimationFrame ||
+		                     window.webkitRequestAnimationFrame ||
+		                     window.mozRequestAnimationFrame ||
+		                     window.oRequestAnimationFrame ||
+		                     window.msRequestAnimationFrame || null;
+		if (animationFrame !== null) {
+			/* requestAnimationFrame() supported, using it. */
+			var recursive = function() {
+				WebPong.main();
+				animationFrame(recursive);
+			};
+			animationFrame(recursive);
+		} else {
+			/* requestAnimationFrame() not supported, using setInterval(). */
+			window.setInterval(this.main, Math.floor(1000/this.p.framerate));
+		};
 	},
 	/**
 	 * Recalculates sizes on window resize.
@@ -90,7 +91,7 @@ var WebPong = {
 	 * Resets the global context properties.
 	*/
 	reset: function() {
-		this.r.ctx.fillStyle = this.p.bgColor;
+		this.r.ctx.fillStyle = this.p.fgColor;
 		this.r.ctx.strokeStyle = this.p.fgColor;
 		this.r.ctx.shadowColor = "rgba(0, 0, 0, 0)";
 		this.r.ctx.shadowBlur = 0;
@@ -100,6 +101,13 @@ var WebPong = {
 		this.r.ctx.lineJoin = "miter";
 		this.r.ctx.lineWidth = 1;
 		this.r.ctx.miterLimit = 10;
+	},
+	/**
+	 * Main loop function.
+	*/
+	main: function() {
+		this.triggerRacketAnimation();
+		this.draw();
 	},
 	/**
 	 * Clears the canvas and draws everything on it.
@@ -135,7 +143,6 @@ var WebPong = {
 		} else {
 			var racketX = this.r.s.racketX;
 		};
-		this.r.ctx.fillStyle = this.p.fgColor;
 		this.r.ctx.fillRect(
 			racketX,
 			this.getRacketY(pos),
