@@ -8,6 +8,8 @@ var WebPong = {
 		racketSteps: 500,
 		ballSteps: 1000,
 		framerate: 60,
+		racketAnimationStep: 2,
+		ballMovementStep: 5,
 		s: {
 			dividerWidth: .003,
 			dividerDashSize: .01,
@@ -33,7 +35,7 @@ var WebPong = {
 		racketsUpwards: [true,false],
 		/* Ball position & movement: */
 		ball: [0,0],
-		ballMovement: [0,0]
+		ballMovement: [5,1]
 	},
 	/**
 	 * Initializes variables and creates handlers.
@@ -55,10 +57,7 @@ var WebPong = {
 		this.r.ball[0] = Math.floor(this.p.ballSteps*.5);
 		this.r.ball[1] = Math.floor(this.p.ballSteps*.5);
 		/* Add resize handler: */
-		$(window).resize(function() {
-			WebPong.resize();
-			WebPong.draw();
-		});
+		$(window).resize(function() { WebPong.resize(); });
 		/* Set up main loop: */
 		var animationFrame = window.requestAnimationFrame ||
 		                     window.webkitRequestAnimationFrame ||
@@ -115,6 +114,7 @@ var WebPong = {
 	*/
 	main: function() {
 		this.triggerRacketAnimation();
+		this.triggerBallMovement();
 		this.draw();
 	},
 	/**
@@ -219,15 +219,26 @@ var WebPong = {
 	triggerRacketAnimation: function() {
 		for (var i=0; i < 2; ++i) {
 			if (this.r.racketsUpwards[i]) {
-				this.r.rackets[i] -= 2;
-				if (this.r.rackets[i] === 0) {
+				this.r.rackets[i] -= this.p.racketAnimationStep;
+				if (this.r.rackets[i] <= 0) {
 					this.r.racketsUpwards[i] = !this.r.racketsUpwards[i];
 				};
 			} else {
-				this.r.rackets[i] += 2;
-				if (this.r.rackets[i] === this.p.racketSteps) {
+				this.r.rackets[i] += this.p.racketAnimationStep;
+				if (this.r.rackets[i] >= this.p.racketSteps) {
 					this.r.racketsUpwards[i] = !this.r.racketsUpwards[i];
 				};
+			};
+		}
+	},
+	/**
+	 * Triggers the ball movement.
+	*/
+	triggerBallMovement: function() {
+		for (var i=0; i < 2; ++i) {
+			this.r.ball[i] += this.r.ballMovement[i];
+			if ((this.r.ballMovement[i] < 0 && this.r.ball[i] <= 0) || (this.r.ballMovement[i] > 0 && this.r.ball[i] >= this.p.ballSteps)) {
+				this.r.ballMovement[i] = -this.r.ballMovement[i];
 			};
 		}
 	}
