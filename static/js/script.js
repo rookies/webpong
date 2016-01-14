@@ -9,7 +9,8 @@ var WebPong = {
 		ballSteps: 1000,
 		framerate: 60,
 		racketAnimationStep: 2,
-		ballMovementStep: 5,
+		ballMovementStepX: 5,
+		ballMovementStepY: 3,
 		s: {
 			dividerWidth: .003,
 			dividerDashSize: .01,
@@ -35,7 +36,7 @@ var WebPong = {
 		racketsUpwards: [true,false],
 		/* Ball position & movement: */
 		ball: [0,0],
-		ballMovement: [5,1]
+		ballMovement: [0,0]
 	},
 	/**
 	 * Initializes variables and creates handlers.
@@ -56,6 +57,9 @@ var WebPong = {
 		/* Set ball position: */
 		this.r.ball[0] = Math.floor(this.p.ballSteps*.5);
 		this.r.ball[1] = Math.floor(this.p.ballSteps*.5);
+		/* Set ball movement: */
+		this.r.ballMovement[0] = (this.randomBool()?1:-1) * this.p.ballMovementStepX;
+		this.r.ballMovement[1] = (this.randomBool()?1:-1) * this.p.ballMovementStepY;
 		/* Add resize handler: */
 		$(window).resize(function() { WebPong.resize(); });
 		/* Set up main loop: */
@@ -93,6 +97,7 @@ var WebPong = {
 		this.r.s.racketX = Math.floor(this.r.width*this.p.s.racketX);
 		this.r.s.ballSize = Math.floor(this.r.height*this.p.s.ballSize);
 		this.r.s.middleX = Math.floor(this.r.width*.5);
+		this.r.s.racketBallSteps = this.xPosToBallSteps(this.r.s.racketX + this.r.s.racketWidth);
 	},
 	/**
 	 * Resets the global context properties.
@@ -235,11 +240,46 @@ var WebPong = {
 	 * Triggers the ball movement.
 	*/
 	triggerBallMovement: function() {
+		/* Wall bumps: */
 		for (var i=0; i < 2; ++i) {
 			this.r.ball[i] += this.r.ballMovement[i];
-			if ((this.r.ballMovement[i] < 0 && this.r.ball[i] <= 0) || (this.r.ballMovement[i] > 0 && this.r.ball[i] >= this.p.ballSteps)) {
+			if ((this.r.ballMovement[i] < 0 && this.r.ball[i] <= 0) ||
+			    (this.r.ballMovement[i] > 0 && this.r.ball[i] >= this.p.ballSteps)) {
 				this.r.ballMovement[i] = -this.r.ballMovement[i];
+				console.log("Bump on wall in " + ((i===0)?"x":"y") + "-direction!");
 			};
 		}
+		/* Racket bumps: */
+		if ((this.r.ballMovement[0] < 0 && this.r.ball[0] <= this.r.s.racketBallSteps) ||
+		    (this.r.ballMovement[0] > 0 && this.r.ball[0] >= this.p.ballSteps - this.r.s.racketBallSteps)) {
+			if (this.r.ball[0] < this.p.ballSteps*.5) {
+				console.log("Bump on left racket?");
+				console.log("Ball: " + this.r.ball[1]);
+				console.log("Racket: " + this.r.rackets[0]);
+			} else {
+				console.log("Bump on right racket?");
+			};
+			this.r.ballMovement[0] = -this.r.ballMovement[0];
+		};
+	},
+	/**
+	 * Converts a x position of the ball into steps:
+	*/
+	xPosToBallSteps: function(x) {
+		return Math.floor((x/this.r.width)*this.p.ballSteps);
+	},
+	/**
+	 * Generates a random number.
+	 * @param min Minimum possible number.
+	 * @param max Maximum possible number.
+	*/
+	randomRange: function(min,max) {
+		return Math.floor(Math.random()*(max-min+1)) + min;
+	},
+	/**
+	 * Generates a random boolean.
+	*/
+	randomBool: function() {
+		return (this.randomRange(0,1) === 0);
 	}
 };
